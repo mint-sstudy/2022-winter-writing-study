@@ -41,13 +41,14 @@ architecture와 weights를 공동으로 optimization하도록 search space를 �
     - recurrent cell의 경우, 현재 step의 input과 이전 step에서 carried된 state값이 cell의 두 개의 input node가 된다
     - cell의 output node는 cell의 중간 노드(input노드와 output 노드 사이에 있는 노드)들 값들이 reduction operation(concatenation과 같은)이 적용된 값이 된다.
     
-    ![DARTS를 통해 찾아낸 convolutional neural network의 normal cell의 예시. c_{k-1}, c_{k-2}가 cell의 input node가 되고 c_{k}가 중간 노드(파란색)들이 reduction operation을 거쳐 얻어져 output node가 된다.](DARTS%20Differentiable%20Architecture%20Search%20%E1%84%82%E1%85%A9%E1%86%AB%E1%84%86%E1%85%AE%E1%86%AB%20%E1%84%85%E1%85%B5%20736c82a5fba4444e85d95c6a567fe0e0/Untitled.png)
+    ![DARTS를 통해 찾아낸 convolutional neural network의 normal cell의 예시. c_{k-1}, c_{k-2}가 cell의 input node가 되고 c_{k}가 중간 노드(파란색)들이 reduction operation을 거쳐 얻어져 output node가 된다.]
+ ![Untitled](https://user-images.githubusercontent.com/61305409/150337944-43fa1386-88b2-4071-b4a2-26e5a8ad5ef1.png)
+
     
     DARTS를 통해 찾아낸 convolutional neural network의 normal cell의 예시. c_{k-1}, c_{k-2}가 cell의 input node가 되고 c_{k}가 중간 노드(파란색)들이 reduction operation을 거쳐 얻어져 output node가 된다.
     
 - 각 중간 노드는
-
-![Untitled](DARTS%20Differentiable%20Architecture%20Search%20%E1%84%82%E1%85%A9%E1%86%AB%E1%84%86%E1%85%AE%E1%86%AB%20%E1%84%85%E1%85%B5%20736c82a5fba4444e85d95c6a567fe0e0/Untitled%201.png)
+![Untitled 1](https://user-images.githubusercontent.com/61305409/150337996-cb702913-1de9-48c2-997e-6f9b1cf170dc.png)
 
 위의 연산을 통해 계산된다. operation 중에 zero operation은 두 노드가 연결되어 있지 않음을 나타내고 이 연산으로 operation의 학습량을 줄여줄 수 있다. (zero operation은 해당 edge를 학습할 필요가 없게 하니까 operation 학습량을 줄여줄 수 있다.)
 
@@ -57,7 +58,8 @@ cell의 각 edge가 convolution, max pooling, zero과 같이 가능한 operation
 
 O는 가능한 연산들의 집합을 말하고 o(x)에서 o( )는 해당 x에 적용되는 operation의 함수를 말한다. search space를 연속적으로 만들려면, 여러 operation 중에 하나, 이렇게 단정적으로 operation을 선택해야 하는 것을 모든 가능한 operation에 대해 softmax를 사용하여 relax시킨다. 
 
-![Untitled](DARTS%20Differentiable%20Architecture%20Search%20%E1%84%82%E1%85%A9%E1%86%AB%E1%84%86%E1%85%AE%E1%86%AB%20%E1%84%85%E1%85%B5%20736c82a5fba4444e85d95c6a567fe0e0/Untitled%202.png)
+![Untitled 2](https://user-images.githubusercontent.com/61305409/150338005-e98a458a-0ee8-468f-90da-96b07713bfed.png)
+
 
 위 식을 살펴보면 mixed operation인 ㆆ(x)값은 가중치인 α값과 x에 특정 operation을 적용한 o(x)값을 곱한 값들의 합인 것을 볼 수 있다. 즉, 각 operation들의 계산 결과 값을 가중치를 통해 조절하여 하나의 값으로 만들었다. 이 가중치 α(i,j)값을 조절하여 (i,j) edge에서 어떤 operation을 사용해야 좋은 성능이 architecture를 선택할 수 있는 지를 알 수 있게 된다. α값은 각각의 operation들에 대한 가중치 값을 가지고 있어야 하므로 가능한 operation 개수를 dimension으로 가지는 vector로 표현된다. 
 
@@ -65,13 +67,13 @@ search의 마지막 단계에서 mixed operation중 가중치(α) 값이 가장 
 
 어떤 architecture를 찾고 나면 training을 해서 weight값들을 update해야 한다. 따라서 우리가 optimization해야 하는 것은 **alpha**값과 찾은 architecture의 **weights**값이다. 논문에서는 training loss가 최소가 되는 weights값을 찾고 이 weights값을 가지면서 validation loss값이 최소가 되는 alpha값을 찾도록 한다. 이는 bilevel optimization problem을 가지게 되고 training loss값이 최소가 되는 weight값을 찾고 해당 weight값을 가지는 alpha가 validation loss가 최소가 되는 방향으로 gradient descent를 적용하여 alpha값을 찾는 것을 계속 반복하여 최적의 alpha값과 weight값을 찾는다.
 
-![Untitled](DARTS%20Differentiable%20Architecture%20Search%20%E1%84%82%E1%85%A9%E1%86%AB%E1%84%86%E1%85%AE%E1%86%AB%20%E1%84%85%E1%85%B5%20736c82a5fba4444e85d95c6a567fe0e0/Untitled%203.png)
+![Untitled 3](https://user-images.githubusercontent.com/61305409/150338015-5e340579-57b0-4984-8fc7-a91c651ffac6.png)
 
 ## Approximate architecture gradient
 
 그런데 inner optimization인 w*를 찾는 과정이 연산이 복잡하므로 해당 식을 다음과 같이 근사시켜 최적의 w값을 찾도록 한다. 
+![Untitled 4](https://user-images.githubusercontent.com/61305409/150338020-caa03ee2-68d7-4c8c-87c4-1b8c55b1e8e3.png)
 
-![Untitled](DARTS%20Differentiable%20Architecture%20Search%20%E1%84%82%E1%85%A9%E1%86%AB%E1%84%86%E1%85%AE%E1%86%AB%20%E1%84%85%E1%85%B5%20736c82a5fba4444e85d95c6a567fe0e0/Untitled%204.png)
 
 w*를 구하기 위해 수렴할때까지 training하도록 연산하지 않고 하나의 training step으로도 최적의 w값과 유사한 값을 얻을 수 있다는 아이디어를 참고하여 근사시켰다고 한다. 
 
@@ -87,15 +89,18 @@ w*를 구하기 위해 수렴할때까지 training하도록 연산하지 않고 
 
 이렇게 해서 DARTS 논문의 알고리즘을 정리해보면 다음과 같다.
 
-![Untitled](DARTS%20Differentiable%20Architecture%20Search%20%E1%84%82%E1%85%A9%E1%86%AB%E1%84%86%E1%85%AE%E1%86%AB%20%E1%84%85%E1%85%B5%20736c82a5fba4444e85d95c6a567fe0e0/Untitled%205.png)
+![Untitled 5](https://user-images.githubusercontent.com/61305409/150338025-fee4bbfa-7d24-4d92-b8b5-46cda3109d41.png)
+
 
 위 그림에서 (6)식을 (7)로 풀어 쓸 수 있는데 
 
-![Untitled](DARTS%20Differentiable%20Architecture%20Search%20%E1%84%82%E1%85%A9%E1%86%AB%E1%84%86%E1%85%AE%E1%86%AB%20%E1%84%85%E1%85%B5%20736c82a5fba4444e85d95c6a567fe0e0/Untitled%206.png)
+![Untitled 6](https://user-images.githubusercontent.com/61305409/150338035-1d35af73-a88d-4aee-86b7-59c7b7242670.png)
+
 
 (7)의 식에서 두 번째 항이 계산 복잡한 metrix-vector연산을 해야하므로 여전히 계산하기 힘들다. 그러므로 이를 유한 미분 근사를 사용하여 (8) 식으로 나타낼 수 있다.
 
-![Untitled](DARTS%20Differentiable%20Architecture%20Search%20%E1%84%82%E1%85%A9%E1%86%AB%E1%84%86%E1%85%AE%E1%86%AB%20%E1%84%85%E1%85%B5%20736c82a5fba4444e85d95c6a567fe0e0/Untitled%207.png)
+![Untitled 7](https://user-images.githubusercontent.com/61305409/150338039-8a11cc4b-438a-41a6-9ab5-8edaa6cb60e1.png)
+
 
 근사시킨 위의 식으로 계산을 하게 되면 계산 복잡도가 O(|alpha||w|)에서 O(|alpha|+|w|)로 줄어들게 된다. 
 
@@ -103,11 +108,15 @@ w*를 구하기 위해 수렴할때까지 training하도록 연산하지 않고 
 
 최적의 mixed operation 값을 찾았다면 섞여있는 것들 중 operation을 선택하여 architecture를 생성해야 한다. 즉, 실제 architecture는 discrete하므로 continuous한 search space를 다시 discrete하게 만들어줘야 한다. 방법은 α값이 가장 큰 k개의 operation을 선택하여 architecture를 구성하면 된다. convolution cell은 k=2, recurrent cell의 경우 k=1로 값을 설정한다고 한다. 
 
-![DARTS를 통해 찾아낸 convolutional cell의 예시](DARTS%20Differentiable%20Architecture%20Search%20%E1%84%82%E1%85%A9%E1%86%AB%E1%84%86%E1%85%AE%E1%86%AB%20%E1%84%85%E1%85%B5%20736c82a5fba4444e85d95c6a567fe0e0/Untitled%208.png)
+![DARTS를 통해 찾아낸 convolutional cell의 예시]
+![Untitled 8](https://user-images.githubusercontent.com/61305409/150338042-78ce2b5a-149c-4d8e-9da1-17f73aeeac42.png)
+
 
 DARTS를 통해 찾아낸 convolutional cell의 예시
 
-![DARTS를 통해 찾아낸 recurrent cell의 예시](DARTS%20Differentiable%20Architecture%20Search%20%E1%84%82%E1%85%A9%E1%86%AB%E1%84%86%E1%85%AE%E1%86%AB%20%E1%84%85%E1%85%B5%20736c82a5fba4444e85d95c6a567fe0e0/Untitled%209.png)
+![DARTS를 통해 찾아낸 recurrent cell의 예시]
+![Untitled 9](https://user-images.githubusercontent.com/61305409/150338047-7cb692b3-f1c4-4012-9515-5c7a29f4703c.png)
+
 
 DARTS를 통해 찾아낸 recurrent cell의 예시
 
